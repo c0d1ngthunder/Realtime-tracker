@@ -11,11 +11,18 @@ const io = socketio(server);
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
+const locations = {};
+
 io.on("connection", (socket) => {
+  Object.entries(locations).forEach(([id, location]) => {
+    socket.emit("receive-location", { id, ...location });
+  });
   socket.on("send-location", (data) => {
+    locations[socket.id] = data;
     io.emit("receive-location", { id: socket.id, ...data });
   });
   socket.on("disconnect", () => {
+    delete locations[socket.id];
     io.emit("user-disconnected", socket.id);
   });
 });
