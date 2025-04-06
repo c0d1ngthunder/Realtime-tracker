@@ -3,15 +3,19 @@ const socket = io();
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
     (position) => {
-      const { latitude, longitude } = position.coords;
-      socket.emit("send-location", { latitude, longitude });
+      const { latitude, longitude, accuracy } = position.coords;
+      if (accuracy < 1000) {
+        socket.emit("send-location", { latitude, longitude });
+      } else {
+        console.error("Accuracy is too low:", accuracy);
+      }
     },
     (err) => {
       console.error(err);
     },
     {
       enableHighAccuracy: true,
-      timeout: 5000,
+      timeout: 10000,
       maximumAge: 0,
     }
   );
@@ -27,9 +31,9 @@ const markers = {};
 socket.on("receive-location", (data) => {
   const { id, latitude, longitude } = data;
   map.setView([latitude, longitude]);
-  if (markers[id]){
-    markers[id].setLatLng([latitude,longitude]);
-  }else{
-    markers[id] = L.marker([latitude,longitude]).addTo(map);
+  if (markers[id]) {
+    markers[id].setLatLng([latitude, longitude]);
+  } else {
+    markers[id] = L.marker([latitude, longitude]).addTo(map);
   }
 });
